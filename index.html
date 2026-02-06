@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ARCTIC ESPORTS | BGMI Tournaments 2026</title>
+<script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial;background:#000;color:#fff}
+a{text-decoration:none;color:#ffcc00}
+.section{padding:60px 30px}
+h2{color:#ffcc00}
+
+/* Background */
+.bg{
+ position:fixed;inset:0;
+ background:
+  radial-gradient(circle at 20% 20%,#6a00ff55,transparent 40%),
+  radial-gradient(circle at 80% 70%,#ffcc0055,transparent 40%),
+  linear-gradient(120deg,#000,#120026,#000);
+ animation:pulse 8s infinite;
+ z-index:-2
+}
+@keyframes pulse{0%{filter:hue-rotate(0)}50%{filter:hue-rotate(25deg)}100%{filter:hue-rotate(0)}}
+
+/* Loader */
+#loader{position:fixed;inset:0;background:#000;display:flex;justify-content:center;align-items:center;z-index:9999}
+.loader{width:70px;height:70px;border:6px solid #6a00ff;border-top:6px solid #ffcc00;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Header */
+header{display:flex;justify-content:space-between;align-items:center;padding:15px 25px;background:#000;position:sticky;top:0;z-index:10}
+.logo{display:flex;gap:10px;align-items:center}
+.logo img{height:40px}
+nav{display:flex;gap:20px}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer}
+.hamburger span{width:25px;height:3px;background:#ffcc00}
+@media(max-width:768px){
+ nav{display:none;position:absolute;right:20px;top:65px;background:#120026;padding:15px;border-radius:10px;flex-direction:column}
+ nav.show{display:flex}
+ .hamburger{display:flex}
+}
+
+/* Cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
+.card{background:#120026;border:1px solid #6a00ff;border-radius:12px;padding:15px;transition:.3s;cursor:pointer}
+.card:hover{transform:scale(1.05);box-shadow:0 0 20px #ffcc00}
+.card img{width:100%;border-radius:8px}
+button{padding:10px;width:100%;background:linear-gradient(90deg,#ffcc00,#6a00ff);border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);justify-content:center;align-items:center;z-index:999}
+.modal-content{background:#120026;padding:25px;border-radius:12px;width:90%;max-width:420px}
+.modal-content input,.modal-content select{width:100%;padding:10px;margin:6px 0;border-radius:5px;border:none}
+.close{float:right;font-size:22px;cursor:pointer;color:#ffcc00}
+</style>
+</head>
+
+<body>
+<div id="loader"><div class="loader"></div></div>
+<div class="bg"></div>
+
+<header>
+ <div class="logo">
+  <img src="assets/logo.png">
+  <h2>ARCTIC ESPORTS</h2>
+ </div>
+ <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+ <nav id="nav">
+  <a href="#tournaments">Tournaments</a>
+  <a href="#teams">Teams</a>
+  <a href="#results">Results</a>
+  <a href="#admin">Admin</a>
+ </nav>
+</header>
+
+<section id="tournaments" class="section">
+<h2>2026 Tournaments</h2>
+<div class="cards" id="tournamentCards"></div>
+</section>
+
+<section id="teams" class="section">
+<h2>Registered Teams</h2>
+<ul id="teamList"></ul>
+</section>
+
+<section id="results" class="section">
+<h2>Results & Standings</h2>
+<div id="resultBox"></div>
+</section>
+
+<section id="admin" class="section">
+<h2>Admin Panel</h2>
+<div id="adminLogin">
+ <input id="adminUser" placeholder="Username">
+ <input id="adminPass" type="password" placeholder="Password">
+ <button onclick="loginAdmin()">Login</button>
+</div>
+<div id="adminArea" style="display:none">
+ <h3>Add Result</h3>
+ <input id="resTournament" placeholder="Tournament Name">
+ <input id="resRank" placeholder="Rank">
+ <input id="resTeam" placeholder="Team Name">
+ <button onclick="addResult()">Save Result</button>
+</div>
+</section>
+
+<!-- Register Modal -->
+<div class="modal" id="regModal">
+ <div class="modal-content">
+  <span class="close" onclick="regModal.style.display='none'">&times;</span>
+  <h3>Register Team</h3>
+  <form id="regForm">
+   <input name="team_name" placeholder="Team Name" required>
+   <input name="p1" placeholder="Player 1 ID" required>
+   <input name="p2" placeholder="Player 2 ID" required>
+   <input name="p3" placeholder="Player 3 ID" required>
+   <input name="p4" placeholder="Player 4 ID" required>
+   <input name="mobile" placeholder="Mobile Number" required>
+   <input name="email" type="email" placeholder="Email Address" required>
+   <select name="tournament" id="tournamentSelect"></select>
+   <button type="submit">Submit</button>
+  </form>
+ </div>
+</div>
+
+<script>
+// Loader
+window.addEventListener("load",()=>document.getElementById("loader").style.display="none");
+
+// Hamburger
+document.getElementById("hamburger").onclick=()=>document.getElementById("nav").classList.toggle("show");
+
+// EmailJS Init (REPLACE IDs)
+(function(){
+  emailjs.init("YOUR_PUBLIC_KEY"); // 👈 paste your Public Key
+})();
+
+// Tournament Data
+const tournaments=[
+ {name:"VALENTINE CUP 10K",start:"2026-02-06",end:"2026-02-10",prize:"₹10,000"},
+ {name:"HOLI CUP 20K",start:"2026-03-10",end:"2026-03-20",prize:"₹20,000"},
+ {name:"SUMMER CUP 50K",start:"2026-04-01",end:"2026-04-15",prize:"₹50,000"},
+ {name:"MONSOON CUP 100K",start:"2026-05-05",end:"2026-05-25",prize:"₹100,000"},
+ {name:"DIWALI CUP 200K",start:"2026-06-06",end:"2026-06-21",prize:"₹200,000"},
+ {name:"WINTER CUP 500K",start:"2026-11-05",end:"2026-12-02",prize:"₹500,000"}
+];
+
+let teams=JSON.parse(localStorage.getItem("teams")||"[]");
+let results=JSON.parse(localStorage.getItem("results")||"[]");
+
+const cards=document.getElementById("tournamentCards");
+const select=document.getElementById("tournamentSelect");
+
+// Render Tournaments
+tournaments.forEach(t=>{
+ const now=new Date(), s=new Date(t.start), e=new Date(t.end);
+ let btnText="Closed", disabled=true;
+ if(now<s){btnText="Starts "+s.toDateString();}
+ else if(now>=s && now<=e){btnText="Register Now";disabled=false;}
+
+ cards.innerHTML+=`
+ <div class="card">
+  <img src="assets/${t.name}.jpg">
+  <h3>${t.name}</h3>
+  <p>${t.prize} | FREE | Squad</p>
+  <button ${disabled?"disabled":""} onclick="openReg('${t.name}')">${btnText}</button>
+ </div>`;
+ select.innerHTML+=`<option>${t.name}</option>`;
+});
+
+// Open Register
+function openReg(name){
+ document.getElementById("regModal").style.display="flex";
+ document.getElementById("tournamentSelect").value=name;
+}
+
+// Submit → EmailJS + Save
+document.getElementById("regForm").addEventListener("submit",function(e){
+ e.preventDefault();
+
+ // Send Email
+ emailjs.sendForm(
+   "YOUR_SERVICE_ID",   // 👈 paste your Service ID
+   "YOUR_TEMPLATE_ID",  // 👈 paste your Template ID
+   this
+ ).then(()=>alert("Registration Email Sent!"),
+        ()=>alert("Email Error!"));
+
+ // Save Locally
+ teams.push({team:this.team_name.value,t:this.tournament.value});
+ localStorage.setItem("teams",JSON.stringify(teams));
+ renderTeams();
+
+ this.reset();
+ document.getElementById("regModal").style.display="none";
+});
+
+// Render Teams
+function renderTeams(){
+ const list=document.getElementById("teamList");
+ list.innerHTML="";
+ teams.forEach(t=>list.innerHTML+=`<li>${t.team} - ${t.t}</li>`);
+}
+renderTeams();
+
+// Admin Login
+function loginAdmin(){
+ if(adminUser.value==="arctic" && adminPass.value==="arctic@123"){
+  adminLogin.style.display="none";
+  adminArea.style.display="block";
+ } else alert("Wrong Login");
+}
+
+// Add Result
+function addResult(){
+ results.push({t:resTournament.value,r:resRank.value,team:resTeam.value});
+ localStorage.setItem("results",JSON.stringify(results));
+ renderResults();
+}
+
+// Render Results
+function renderResults(){
+ const box=document.getElementById("resultBox");
+ box.innerHTML="";
+ results.forEach(r=>box.innerHTML+=`<p><b>${r.t}</b> | Rank ${r.r} - ${r.team}</p>`);
+}
+renderResults();
+</script>
+</body>
+</html>
